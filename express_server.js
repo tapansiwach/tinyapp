@@ -22,6 +22,17 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+function generateRandomString() {
+  const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const len = chars.length;
+  let output = "";
+  for (let j = 0; j < 6; j++) {
+    const randomIndex = Math.floor(Math.random() * len);
+    output += chars[randomIndex];
+  }
+  return output;
+}
+
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   res.send("Ok");         // Respond with 'Ok' (we will replace this)
