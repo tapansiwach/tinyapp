@@ -50,11 +50,22 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
-  res.render("urls_show", templateVars);
+  if (templateVars.longURL) {
+    res.render("urls_show", templateVars);
+  } else {
+    res.statusCode = 404;
+    res.send("404 Page Not Found");
+  }
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  res.redirect(urlDatabase[req.params.shortURL]);
+  const longURL = urlDatabase[req.params.shortURL];
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    res.statusCode = 404;
+    res.send("404 Page Not Found");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
