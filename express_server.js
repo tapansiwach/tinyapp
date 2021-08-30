@@ -34,8 +34,11 @@ function generateRandomString() {
 }
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  const longURL = req.body.longURL;
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = longURL;
+  console.log(urlDatabase);
+  res.redirect(`http://localhost:${PORT}/urls/${shortURL}`);
 });
 
 app.get("/urls/new", (req, res) => {
