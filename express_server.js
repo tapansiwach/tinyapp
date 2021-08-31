@@ -33,6 +33,11 @@ function generateRandomString() {
   return output;
 }
 
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie("name", username).redirect("/urls");
+});
+
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
