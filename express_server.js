@@ -43,6 +43,10 @@ app.post("/login", (req, res) => {
   res.cookie("name", username).redirect("/urls");
 });
 
+app.post("/logout", (req, res) => {
+  res.clearCookie("name").redirect("/urls");
+});
+
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
