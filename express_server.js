@@ -64,10 +64,10 @@ function generateRandomString() {
   return output;
 }
 
-function findUserByEmail(email) {
-  for (const uid in users) {
-    if (users[uid].email === email) {
-      return users[uid];
+function findUserByEmail(email, usersDb) {
+  for (const uid in usersDb) {
+    if (usersDb[uid].email === email) {
+      return usersDb[uid];
     }
   }
 }
@@ -221,7 +221,7 @@ app.post("/register", (req, res) => {
     res.status(400).send("Bad Request: email and password cannot be empty");
     return;
   }
-  if (findUserByEmail(email)) {
+  if (findUserByEmail(email, users)) {
     res.status(400).send("Bad Request: email already exists");
     return;
   }
@@ -242,7 +242,7 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const user = findUserByEmail(email);
+  const user = findUserByEmail(email, users);
   if (!user) {
     return res.send("Error while signing in: user does not exist")
   }
