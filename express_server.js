@@ -11,8 +11,14 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    uid: "userRandomID"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    uid: "user2RandomID"
+  }
 };
 
 const users = {
@@ -28,6 +34,14 @@ const users = {
   }
 };
 
+/**
+ * nodemon is resetting urls data during development, 
+ * and it is efficient to have an endpoint which can give us what our users object contains
+ * TODO: remove this endpoint in production.
+ */
+app.get("/urls-dev", (req, res) => {
+  res.send(JSON.stringify(urlDatabase));
+});
 
 function generateRandomString() {
   const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -69,7 +83,7 @@ app.get("/urls", (req, res) => {
     user: users[user_id],
     urls: urlDatabase
   };
-  res.render("urls_index", templateVars);
+  res.render("urls_index", templateVars); // TODO: database structure changed, refactor urls_index
 });
 
 
@@ -81,7 +95,10 @@ app.post("/urls", (req, res) => {
   }
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    longURL,
+    uid: user_id
+  }; // TODO: change database structure here
   console.log(urlDatabase);
   res.redirect(`http://localhost:${PORT}/urls/${shortURL}`);
 });
@@ -101,7 +118,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: users[user_id],
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
+    longURL: urlDatabase[req.params.shortURL].longURL // TODO: database structure changed, refactor extraction
   };
   if (templateVars.longURL) {
     res.render("urls_show", templateVars);
@@ -112,7 +129,7 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL; // TODO: database structure changed, refactor extraction
   if (longURL) {
     res.redirect(longURL);
   } else {
@@ -129,7 +146,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  urlDatabase[shortURL] = req.body.longURL;
+  const uid = req.cookies.user_id;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    uid
+  }; // TODO: database structure changed, refactor assignment
   res.redirect("/urls");
 });
 
