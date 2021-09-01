@@ -22,18 +22,7 @@ const urlDatabase = {
   }
 };
 
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "testing-"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "testing-"
-  }
-};
+const users = {};
 
 
 // npm -E  is same as npm --save-exact
@@ -46,9 +35,17 @@ const users = {
 app.get("/urls-dev", (req, res) => {
   res.send(JSON.stringify(urlDatabase));
 });
+app.get("/users-dev", (req, res) => {
+  res.send(JSON.stringify(users));
+});
 /**
- * testing
+ * testing bcrypt
  */
+// const password = "purple-monkey-dinosaur";
+// const hashedPassword = bcrypt.hashSync(password);
+// console.log(hashedPassword);
+// const comparison = bcrypt.compareSync("purple-monkey-dinosaur", hashedPassword);
+// console.log(comparison);
 
 function generateRandomString() {
   const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -218,14 +215,14 @@ app.post("/register", (req, res) => {
     res.status(400).send("Bad Request: email and password cannot be empty");
     return;
   }
-
   if (findUserByEmail(email)) {
     res.status(400).send("Bad Request: email already exists");
     return;
   }
 
   const id = generateRandomString();
-  users[id] = { id, email, password };
+  const hashedPassword = bcrypt.hashSync(password);
+  users[id] = { id, email, hashedPassword };
   console.log(users);
   res.cookie("user_id", id).redirect("/urls");
 });
@@ -242,7 +239,8 @@ app.post("/login", (req, res) => {
   if (!user) {
     return res.send("Error while signing in: user does not exist")
   }
-  if (user.password !== password) {
+  const match = bcrypt.compareSync(password, user.hashedPassword);
+  if (!match) {
     return res.send("Error while signing in: password does not match")
   }
 
