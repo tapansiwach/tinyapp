@@ -115,6 +115,17 @@ app.get("/register", (req, res) => {
   res.render("user_registration");
 });
 
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  users[id] = { id, email, password };
+
+  console.log(users);
+
+  res.cookie("user_id", id).redirect("/urls");
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
