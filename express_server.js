@@ -4,10 +4,18 @@ const bcrypt = require("bcrypt-nodejs");
 const PORT = 8080; // default port 8080
 
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
+// TODO? : require('keygrip') to generate rotating keys for cookie-session
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  // keys: [/* secret keys */],
+  secret: "rumpelsteilskein",
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 app.set("view engine", "ejs");
 
@@ -24,8 +32,6 @@ const urlDatabase = {
 
 const users = {};
 
-
-// npm -E  is same as npm --save-exact
 
 /**
  * nodemon is resetting urls data during development, 
@@ -82,7 +88,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   // console.log("users:", users);
   // console.log("user_id:", user_id);
   // console.log("user:", users[user_id]);
@@ -108,7 +114,7 @@ app.get("/urls", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = users[user_id];
   if (!user) {
     return res.redirect("/login");
@@ -124,7 +130,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = users[user_id];
   if (!user_id) {
     return res.redirect("/login");
@@ -133,7 +139,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = users[user_id];
 
   if (!user_id) {
@@ -161,7 +167,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (!(shortURL in urlDatabase)) {
     return res.status(404).render("404", {
       user,
@@ -174,7 +180,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  const uid = req.cookies.user_id;
+  const uid = req.session.user_id;
   const userURLs = urlsForUser(uid);
   if (!(shortURL in userURLs)) {
     return res.status(404).render("404", {
@@ -187,7 +193,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const uid = req.cookies.user_id;
+  const uid = req.session.user_id
   const userURLs = urlsForUser(uid);
   if (!(shortURL in userURLs)) {
     return res.status(404).render("404", {
@@ -202,7 +208,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const uid = req.cookies.user_id;
+  const uid = req.session.user_id
   const user = users[uid];
   res.render("user_registration", { user });
 });
@@ -224,11 +230,12 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password);
   users[id] = { id, email, hashedPassword };
   console.log(users);
-  res.cookie("user_id", id).redirect("/urls");
+  req.session.user_id = id;
+  res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
-  const uid = req.cookies.user_id;
+  const uid = req.session.user_id;
   const user = users[uid];
   res.render("login_form", { user });
 });
@@ -244,11 +251,13 @@ app.post("/login", (req, res) => {
     return res.send("Error while signing in: password does not match")
   }
 
-  res.cookie("user_id", user.id).redirect("/urls");
+  req.session.user_id = user.id;
+  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id").redirect("/urls");
+  req.session = null;
+  res.redirect("/urls");
 });
 
 
