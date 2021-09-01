@@ -74,6 +74,11 @@ app.get("/urls", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
+  const user_id = req.cookies.user_id;
+  const user = users[user_id];
+  if (!user) {
+    return res.redirect("/login");
+  }
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = longURL;
@@ -83,11 +88,11 @@ app.post("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id;
-
-  const templateVars = {
-    user: users[user_id]
-  };
-  res.render("urls_new", templateVars);
+  const user = users[user_id];
+  if (!user_id) {
+    return res.redirect("/login");
+  }
+  res.render("urls_new", { user });
 });
 
 app.get("/urls/:shortURL", (req, res) => {
