@@ -170,6 +170,13 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
+  const uid = req.cookies.user_id;
+  const userURLs = urlsForUser(uid);
+  if (!(shortURL in userURLs)) {
+    return res.status(404).render("404", {
+      message: "Deletion of another user's url is not allowed"
+    })
+  }
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
@@ -177,6 +184,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const uid = req.cookies.user_id;
+  const userURLs = urlsForUser(uid);
+  if (!(shortURL in userURLs)) {
+    return res.status(404).render("404", {
+      message: "Editing another user's url is not allowed"
+    })
+  }
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     uid
