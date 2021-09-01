@@ -62,6 +62,16 @@ function findUserByEmail(email) {
   }
 }
 
+function urlsForUser(uid) {
+  const output = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].uid === uid) {
+      output[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return output;
+}
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -78,10 +88,16 @@ app.get("/urls", (req, res) => {
    * and so the users object reverts to the initial value and user_id is not found in users
    * and so the html templates (_header partial) receives an undefined user
    */
-
+  if (!user_id) {
+    return res.status(404).render("404", {
+      user: undefined,
+      message: "login required for viewing urls"
+    });
+  }
+  const userURLs = urlsForUser(user_id);
   const templateVars = {
     user: users[user_id],
-    urls: urlDatabase
+    urls: userURLs
   };
   res.render("urls_index", templateVars);
 });
@@ -114,24 +130,37 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.cookies.user_id;
+  const user = users[user_id];
 
-  const templateVars = {
-    user: users[user_id],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL
-  };
-  if (templateVars.longURL) {
-    res.render("urls_show", templateVars);
-  } else {
-    res.statusCode = 404;
-    res.send("404 Page Not Found");
+  if (!user_id) {
+    return res.status(404).render("404", {
+      user: undefined,
+      message: "login is required for Editing urls"
+    });
   }
+  const userURLs = urlsForUser(user_id);
+  const shortURL = req.params.shortURL;
+  if (!(shortURL in userURLs)) {
+    res.status(404).render("404", {
+      user,
+      message: "You can only edit your own URLs"
+    });
+  }
+  const templateVars = {
+    user,
+    shortURL,
+    longURL: userURLs[shortURL].longURL,
+  };
+
+  res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  const user = users[req.cookies.user_id];
   if (!(shortURL in urlDatabase)) {
     return res.status(404).render("404", {
+      user,
       message: `shortURL ${shortURL} not found`
     });
   }

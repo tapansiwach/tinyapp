@@ -3,11 +3,12 @@
 <%- include("partials/_head") %>
 
   <body>
-    <div class="d-flex justify-content-center">
-      <div class="alert alert-danger" role="alert">
-        <%= message %>
+    <%- include("partials/_header", { user }) %>
+      <div class="d-flex justify-content-center py-2">
+        <div class="alert alert-danger" role="alert">
+          <%= message %>
+        </div>
       </div>
-    </div>
 
   </body>
 
