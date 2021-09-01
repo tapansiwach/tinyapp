@@ -98,6 +98,10 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
+app.get("/register", (req, res) => {
+  res.render("user_registration");
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
