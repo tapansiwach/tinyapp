@@ -33,8 +33,19 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const user_id = req.cookies.user_id;
+  // console.log("users:", users);
+  // console.log("user_id:", user_id);
+  // console.log("user:", users[user_id]);
+  /**
+   * a cookie is being set when user registers, 
+   * but nodemon restarts the server whenever a change is saved to this file, 
+   * and so the users object reverts to the initial value and user_id is not found in users
+   * and so the html templates (_header partial) receives an undefined user
+   */
+
   const templateVars = {
-    username: req.cookies["name"],
+    user: users[user_id],
     urls: urlDatabase
   };
   res.render("urls_index", templateVars);
@@ -69,15 +80,19 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  const user_id = req.cookies.user_id;
+
   const templateVars = {
-    username: req.cookies["name"]
+    user: users[user_id]
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  const user_id = req.cookies.user_id;
+
   const templateVars = {
-    username: req.cookies["name"],
+    user: users[user_id],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]
   };
