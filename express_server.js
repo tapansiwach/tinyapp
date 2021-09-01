@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
 // TODO? : require('keygrip') to generate rotating keys for cookie-session
 
+const { generateRandomString, findUserByEmail, urlsForUser } = require("./helpers");
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
@@ -19,17 +21,7 @@ app.use(cookieSession({
 
 app.set("view engine", "ejs");
 
-const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    uid: "userRandomID"
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    uid: "user2RandomID"
-  }
-};
-
+const urlDatabase = {};
 const users = {};
 
 
@@ -53,34 +45,6 @@ app.get("/users-dev", (req, res) => {
 // const comparison = bcrypt.compareSync("purple-monkey-dinosaur", hashedPassword);
 // console.log(comparison);
 
-function generateRandomString() {
-  const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const len = chars.length;
-  let output = "";
-  for (let j = 0; j < 6; j++) {
-    const randomIndex = Math.floor(Math.random() * len);
-    output += chars[randomIndex];
-  }
-  return output;
-}
-
-function findUserByEmail(email, usersDb) {
-  for (const uid in usersDb) {
-    if (usersDb[uid].email === email) {
-      return usersDb[uid];
-    }
-  }
-}
-
-function urlsForUser(uid, urlDb) {
-  const output = {};
-  for (const shortURL in urlDb) {
-    if (urlDb[shortURL].uid === uid) {
-      output[shortURL] = urlDb[shortURL];
-    }
-  }
-  return output;
-}
 
 
 app.get("/", (req, res) => {
