@@ -19,12 +19,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "testing-"
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "testing-"
   }
 };
 
@@ -40,13 +40,12 @@ function generateRandomString() {
   return output;
 }
 
-function emailAlreadyExists(email) {
+function findUserByEmail(email) {
   for (const uid in users) {
     if (users[uid].email === email) {
-      return true;
+      return users[uid];
     }
   }
-  return false;
 }
 
 
@@ -73,15 +72,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-
-app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("name", username).redirect("/urls");
-});
-
-app.post("/logout", (req, res) => {
-  res.clearCookie("name").redirect("/urls");
-});
 
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
@@ -151,7 +141,7 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  if (emailAlreadyExists(email)) {
+  if (findUserByEmail(email)) {
     res.status(400).send("Bad Request: email already exists");
     return;
   }
@@ -165,6 +155,21 @@ app.post("/register", (req, res) => {
 app.get("/login", (req, res) => {
   res.render("login_form");
 });
+
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  const user = findUserByEmail(email);
+  if (user && user.password === password) {
+    res.cookie("user_id", user.id).redirect("/urls");
+  }
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id").redirect("/urls");
+});
+
+
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
