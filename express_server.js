@@ -83,7 +83,7 @@ app.get("/urls", (req, res) => {
     user: users[user_id],
     urls: urlDatabase
   };
-  res.render("urls_index", templateVars); // TODO: database structure changed, refactor urls_index
+  res.render("urls_index", templateVars);
 });
 
 
@@ -98,7 +98,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = {
     longURL,
     uid: user_id
-  }; // TODO: change database structure here
+  };
   console.log(urlDatabase);
   res.redirect(`http://localhost:${PORT}/urls/${shortURL}`);
 });
@@ -118,7 +118,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: users[user_id],
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL // TODO: database structure changed, refactor extraction
+    longURL: urlDatabase[req.params.shortURL].longURL
   };
   if (templateVars.longURL) {
     res.render("urls_show", templateVars);
@@ -129,7 +129,9 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL; // TODO: database structure changed, refactor extraction
+
+
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   if (longURL) {
     res.redirect(longURL);
   } else {
@@ -150,7 +152,7 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     uid
-  }; // TODO: database structure changed, refactor assignment
+  };
   res.redirect("/urls");
 });
 
