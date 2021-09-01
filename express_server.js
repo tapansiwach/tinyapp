@@ -129,15 +129,14 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-
-
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  if (longURL) {
-    res.redirect(longURL);
-  } else {
-    res.statusCode = 404;
-    res.send("404 Page Not Found");
+  const shortURL = req.params.shortURL;
+  if (!(shortURL in urlDatabase)) {
+    return res.status(404).render("404", {
+      message: `shortURL ${shortURL} not found`
+    });
   }
+  const longURL = urlDatabase[shortURL].longURL;
+  res.redirect(longURL);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
