@@ -129,7 +129,9 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("user_registration");
+  const uid = req.cookies.user_id;
+  const user = users[uid];
+  res.render("user_registration", { user });
 });
 
 app.post("/register", (req, res) => {
@@ -153,7 +155,9 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login_form");
+  const uid = req.cookies.user_id;
+  const user = users[uid];
+  res.render("login_form", { user });
 });
 
 app.post("/login", (req, res) => {
