@@ -163,9 +163,14 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = findUserByEmail(email);
-  if (user && user.password === password) {
-    res.cookie("user_id", user.id).redirect("/urls");
+  if (!user) {
+    return res.send("Error while signing in: user does not exist")
   }
+  if (user.password !== password) {
+    return res.send("Error while signing in: password does not match")
+  }
+
+  res.cookie("user_id", user.id).redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
