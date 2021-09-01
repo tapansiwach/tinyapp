@@ -162,6 +162,10 @@ app.post("/register", (req, res) => {
   res.cookie("user_id", id).redirect("/urls");
 });
 
+app.get("/login", (req, res) => {
+  res.render("login_form");
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
