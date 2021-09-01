@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const bcrypt = require("bcrypt-nodejs");
 const PORT = 8080; // default port 8080
 
 const bodyParser = require("body-parser");
@@ -34,6 +35,9 @@ const users = {
   }
 };
 
+
+// npm -E  is same as npm --save-exact
+
 /**
  * nodemon is resetting urls data during development, 
  * and it is efficient to have an endpoint which can give us what our users object contains
@@ -42,6 +46,9 @@ const users = {
 app.get("/urls-dev", (req, res) => {
   res.send(JSON.stringify(urlDatabase));
 });
+/**
+ * testing
+ */
 
 function generateRandomString() {
   const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
