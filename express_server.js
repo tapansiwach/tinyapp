@@ -72,11 +72,11 @@ function findUserByEmail(email, usersDb) {
   }
 }
 
-function urlsForUser(uid) {
+function urlsForUser(uid, urlDb) {
   const output = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].uid === uid) {
-      output[shortURL] = urlDatabase[shortURL];
+  for (const shortURL in urlDb) {
+    if (urlDb[shortURL].uid === uid) {
+      output[shortURL] = urlDb[shortURL];
     }
   }
   return output;
@@ -104,7 +104,7 @@ app.get("/urls", (req, res) => {
       message: "login required for viewing urls"
     });
   }
-  const userURLs = urlsForUser(user_id);
+  const userURLs = urlsForUser(user_id, urlDatabase);
   const templateVars = {
     user: users[user_id],
     urls: userURLs
@@ -148,7 +148,7 @@ app.get("/urls/:shortURL", (req, res) => {
       message: "login is required for Editing urls"
     });
   }
-  const userURLs = urlsForUser(user_id);
+  const userURLs = urlsForUser(user_id, urlDatabase);
   const shortURL = req.params.shortURL;
   if (!(shortURL in userURLs)) {
     res.status(404).render("404", {
@@ -181,7 +181,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   const uid = req.session.user_id;
-  const userURLs = urlsForUser(uid);
+  const userURLs = urlsForUser(uid, urlDatabase);
   if (!(shortURL in userURLs)) {
     return res.status(404).render("404", {
       message: "Deletion of another user's url is not allowed"
@@ -194,7 +194,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const uid = req.session.user_id
-  const userURLs = urlsForUser(uid);
+  const userURLs = urlsForUser(uid, urlDatabase);
   if (!(shortURL in userURLs)) {
     return res.status(404).render("404", {
       message: "Editing another user's url is not allowed"
