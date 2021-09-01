@@ -28,6 +28,28 @@ const users = {
   }
 };
 
+
+function generateRandomString() {
+  const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const len = chars.length;
+  let output = "";
+  for (let j = 0; j < 6; j++) {
+    const randomIndex = Math.floor(Math.random() * len);
+    output += chars[randomIndex];
+  }
+  return output;
+}
+
+function emailAlreadyExists(email) {
+  for (const uid in users) {
+    if (users[uid].email === email) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -51,16 +73,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-function generateRandomString() {
-  const chars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const len = chars.length;
-  let output = "";
-  for (let j = 0; j < 6; j++) {
-    const randomIndex = Math.floor(Math.random() * len);
-    output += chars[randomIndex];
-  }
-  return output;
-}
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
@@ -131,13 +143,22 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+
+  if (email === "" || password === "") {
+    res.status(400).send("Bad Request: email and password cannot be empty");
+    return;
+  }
+
+  if (emailAlreadyExists(email)) {
+    res.status(400).send("Bad Request: email already exists");
+    return;
+  }
+
+  const id = generateRandomString();
   users[id] = { id, email, password };
-
   console.log(users);
-
   res.cookie("user_id", id).redirect("/urls");
 });
 
