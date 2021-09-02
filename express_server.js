@@ -1,137 +1,146 @@
 const express = require("express");
 const app = express();
 const bcrypt = require("bcrypt-nodejs");
-const PORT = 8080; // default port 8080
-
-const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
-// TODO? : require('keygrip') to generate rotating keys for cookie-session
 
 const { generateRandomString, findUserByEmail, urlsForUser } = require("./helpers");
+const PORT = 8080; // default port 8080
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
-  // keys: [/* secret keys */],
-  secret: "rumpelsteilskein",
-
+  secret: "rumpelsteilskein", // change this to your own secret after forking this repo
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
 app.set("view engine", "ejs");
 
+/**
+ * Initialize the databases for urls and for users
+ * These will be added to when a new users sign up
+ * and when users create shortr urls
+ */
 const urlDatabase = {};
 const users = {};
 
 
-/**
- * nodemon is resetting urls data during development, 
- * and it is efficient to have an endpoint which can give us what our users object contains
- * TODO: remove this endpoint in production.
- */
-app.get("/urls-dev", (req, res) => {
-  res.send(JSON.stringify(urlDatabase));
-});
-app.get("/users-dev", (req, res) => {
-  res.send(JSON.stringify(users));
-});
-/**
- * testing bcrypt
- */
-// const password = "purple-monkey-dinosaur";
-// const hashedPassword = bcrypt.hashSync(password);
-// console.log(hashedPassword);
-// const comparison = bcrypt.compareSync("purple-monkey-dinosaur", hashedPassword);
-// console.log(comparison);
-
-
-
+// request --> GET / --> user arrives at home screen
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const uid = req.session.userId;
+  const user = users[uid];
+  // if user is logged in, redirect to /urls
+  if (user) {
+    return res.redirect("/urls");
+  } else { // otherwise, redirect to login screen
+    return res.redirect("/login");
+  }
 });
 
+
+// request --> GET /urls --> users can see all the urls which they have created
 app.get("/urls", (req, res) => {
-  const user_id = req.session.user_id;
-  // console.log("users:", users);
-  // console.log("user_id:", user_id);
-  // console.log("user:", users[user_id]);
-  /**
-   * a cookie is being set when user registers, 
-   * but nodemon restarts the server whenever a change is saved to this file, 
-   * and so the users object reverts to the initial value and user_id is not found in users
-   * and so the html templates (_header partial) receives an undefined user
-   */
-  if (!user_id) {
+  const userId = req.session.userId;
+  // if user is not logged in, redirect them to login screen
+  if (!userId) {
     return res.status(404).render("404", {
       user: undefined,
-      message: "login required for viewing urls"
+      message: "Login is required for viewing urls"
     });
   }
-  const userURLs = urlsForUser(user_id, urlDatabase);
+  // render the urls_index template
+  const userURLs = urlsForUser(userId, urlDatabase);
   const templateVars = {
-    user: users[user_id],
+    user: users[userId],
     urls: userURLs
   };
   res.render("urls_index", templateVars);
 });
 
 
+// request --> POST /urls --> a new short url is created
 app.post("/urls", (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
+  // if user is not logged in, show error message
   if (!user) {
-    return res.redirect("/login");
+    return res.status(404).render("404", {
+      user: undefined,
+      message: "Login is required for Editing urls"
+    });
   }
+  // gather longURL data which user provided
   const longURL = req.body.longURL;
+  // generate a shortURL,
   const shortURL = generateRandomString();
+  // associate it with the longURL and the user,
   urlDatabase[shortURL] = {
     longURL,
-    uid: user_id
+    uid: userId
   };
-  console.log(urlDatabase);
+  // and redirect to /urls/:id, where :id matches the ID of the newly saved URL
   res.redirect(`http://localhost:${PORT}/urls/${shortURL}`);
 });
 
+
+// request --> GET /urls/new --> renders a form which can be filled in
+// with the original long url
 app.get("/urls/new", (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
-  if (!user_id) {
+  const userId = req.session.userId;
+  const user = users[userId];
+  // if user is not logged in, redirect them to login screen
+  if (!userId) {
     return res.redirect("/login");
   }
+  // render the urls_new template
   res.render("urls_new", { user });
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
 
-  if (!user_id) {
+// request --> GET /urls/:shortURL --> dispays a form for editing
+// the long url associated with the provided :shortURL
+app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.session.userId;
+  const user = users[userId];
+  // if user is not signed in, show error message
+  if (!userId) {
     return res.status(404).render("404", {
       user: undefined,
-      message: "login is required for Editing urls"
+      message: "Login is required for Editing urls"
     });
   }
-  const userURLs = urlsForUser(user_id, urlDatabase);
   const shortURL = req.params.shortURL;
+  // if :shortURL doesn't exist, show error message
+  if (!(shortURL in urlDatabase)) {
+    res.status(404).render("404", {
+      user,
+      message: "URL not found"
+    });
+  }
+  const userURLs = urlsForUser(userId, urlDatabase);
+  // if :shortURL doesn't belong to the user, show error message
   if (!(shortURL in userURLs)) {
     res.status(404).render("404", {
       user,
       message: "You can only edit your own URLs"
     });
   }
+  // render the form for editing the long url
   const templateVars = {
     user,
     shortURL,
     longURL: userURLs[shortURL].longURL,
   };
-
   res.render("urls_show", templateVars);
 });
 
+
+// request --> GET /u/:shortURL --> go to the longURL website
+// which is associated with a a given :shortURL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const user = users[req.session.user_id];
+  const user = users[req.session.userId];
+  // if :shortURL doesn't exist, show error message
   if (!(shortURL in urlDatabase)) {
     return res.status(404).render("404", {
       user,
@@ -139,101 +148,135 @@ app.get("/u/:shortURL", (req, res) => {
     });
   }
   const longURL = urlDatabase[shortURL].longURL;
+  // redirect the user to the (longURL) website
   res.redirect(longURL);
 });
 
+// request --> POST /urls/:id/delete --> delete the (:id) shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  const uid = req.session.user_id;
+  const uid = req.session.userId;
+  // if user is not logged in, show error message
+  if (!uid) {
+    return res.status(404).render("404", {
+      message: "Login is required for updating a url"
+    });
+  }
   const userURLs = urlsForUser(uid, urlDatabase);
+  // if url belongs to another user, show error message
   if (!(shortURL in userURLs)) {
     return res.status(404).render("404", {
       message: "Deletion of another user's url is not allowed"
-    })
+    });
   }
+  // delete the url and redirect to /urls
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
 
+// request --> POST /urls/:id --> update a url which was earlier created
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const uid = req.session.user_id
+  const uid = req.session.userId;
+  // if user is not logged in, show error message
+  if (!uid) {
+    return res.status(404).render("404", {
+      message: "Login is required for updating a url"
+    });
+  }
   const userURLs = urlsForUser(uid, urlDatabase);
+  // if the url doesn't belong to the user, show error message
   if (!(shortURL in userURLs)) {
     return res.status(404).render("404", {
       message: "Editing another user's url is not allowed"
-    })
+    });
   }
+  // update the url,
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     uid
   };
+  // and redirect to /urls
   res.redirect("/urls");
 });
 
+// request --> GET /register --> display signup/registration form
 app.get("/register", (req, res) => {
-  const uid = req.session.user_id
+  const uid = req.session.userId;
   const user = users[uid];
+  // if user is already logged in, redirect to /urls
+  if (user) {
+    return res.redirect("/urls");
+  }
+  // render the registration form
   res.render("user_registration", { user });
 });
 
+// request --> POST /register --> create a new user
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
+  // if email or password are empty, show error message
   if (email === "" || password === "") {
     res.status(400).send("Bad Request: email and password cannot be empty");
     return;
   }
+  // if email already exists, show error message
   if (findUserByEmail(email, users)) {
     res.status(400).send("Bad Request: email already exists");
     return;
   }
-
+  // create an identifier (id) for user
   const id = generateRandomString();
+  // create a hash of the user password
   const hashedPassword = bcrypt.hashSync(password);
+  // create user
   users[id] = { id, email, hashedPassword };
-  console.log(users);
-  req.session.user_id = id;
+  // set a cookie and redirect to /urls
+  req.session.userId = id;
   res.redirect("/urls");
 });
 
+// request --> GET /login --> display login form
 app.get("/login", (req, res) => {
-  const uid = req.session.user_id;
+  const uid = req.session.userId;
   const user = users[uid];
+  // if user is already logged in, redirect to /urls
+  if (user) {
+    return res.redirect("/urls");
+  }
+  // render the login form
   res.render("login_form", { user });
 });
 
+// request --> POST /login --> login user to website
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = findUserByEmail(email, users);
+  // if provided email doesn't exist, show error message
   if (!user) {
-    return res.send("Error while signing in: user does not exist")
+    return res.send("Error while signing in: user does not exist");
   }
+  // if password doesn't match, show error message
   const match = bcrypt.compareSync(password, user.hashedPassword);
   if (!match) {
-    return res.send("Error while signing in: password does not match")
+    return res.send("Error while signing in: password does not match");
   }
-
-  req.session.user_id = user.id;
+  // set a cookie and redirect to /urls
+  req.session.userId = user.id;
   res.redirect("/urls");
 });
 
+// request --> POST /logout --> log the user out
 app.post("/logout", (req, res) => {
+  // delete the cookie
   req.session = null;
+  // redirect to /urls
   res.redirect("/urls");
 });
 
 
 
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

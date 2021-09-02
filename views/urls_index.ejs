@@ -44,6 +44,13 @@
             <% } %>
         </tbody>
       </table>
+      <% if (Object.keys(urls).length===0) { %>
+        <div class="d-flex justify-content-center py-2">
+          <div class="alert alert-info" role="alert">
+            No URLs created yet. Click on "Create New URL" to start
+          </div>
+        </div>
+        <% } %>
     </main>
 
     <%- include("partials/_bootstrap_js") %>

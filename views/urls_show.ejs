@@ -22,7 +22,7 @@
         <form class="form-inline" action="/urls/<%= shortURL %> " method="POST">
           <div class="form-group mb-2">
             <label for="longURL">Edit Long URL:</label>
-            <input class="form-control" type="text" name="longURL" placeholder="http://"
+            <input class="form-control" type="text" name="longURL" value="<%= longURL %>" placeholder="http://"
               style="width: 300px; margin: 1em">
             <button type="submit" class="btn btn-primary">Update</button>
           </div>
