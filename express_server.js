@@ -167,7 +167,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   // if url belongs to another user, show error message
   if (!(shortURL in userURLs)) {
     return res.status(400).render("error", {
-      user,
+      user: users[uid],
       message: "Deletion of another user's url is not allowed"
     });
   }
@@ -191,7 +191,7 @@ app.post("/urls/:id", (req, res) => {
   // if the url doesn't belong to the user, show error message
   if (!(shortURL in userURLs)) {
     return res.status(400).render("error", {
-      user,
+      user: users[uid],
       message: "Editing another user's url is not allowed"
     });
   }
