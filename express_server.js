@@ -43,7 +43,7 @@ app.get("/urls", (req, res) => {
   const userId = req.session.userId;
   // if user is not logged in, redirect them to login screen
   if (!userId) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
       user: undefined,
       message: "Login is required for viewing urls"
     });
@@ -64,7 +64,7 @@ app.post("/urls", (req, res) => {
   const user = users[userId];
   // if user is not logged in, show error message
   if (!user) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
       user: undefined,
       message: "Login is required for Editing urls"
     });
@@ -104,7 +104,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const user = users[userId];
   // if user is not signed in, show error message
   if (!userId) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
       user: undefined,
       message: "Login is required for Editing urls"
     });
@@ -112,7 +112,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   // if :shortURL doesn't exist, show error message
   if (!(shortURL in urlDatabase)) {
-    res.status(404).render("404", {
+    res.status(404).render("error", {
       user,
       message: "URL not found"
     });
@@ -120,7 +120,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const userURLs = urlsForUser(userId, urlDatabase);
   // if :shortURL doesn't belong to the user, show error message
   if (!(shortURL in userURLs)) {
-    res.status(404).render("404", {
+    res.status(400).render("error", {
       user,
       message: "You can only edit your own URLs"
     });
@@ -142,7 +142,7 @@ app.get("/u/:shortURL", (req, res) => {
   const user = users[req.session.userId];
   // if :shortURL doesn't exist, show error message
   if (!(shortURL in urlDatabase)) {
-    return res.status(404).render("404", {
+    return res.status(404).render("error", {
       user,
       message: `shortURL ${shortURL} not found`
     });
@@ -158,14 +158,16 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const uid = req.session.userId;
   // if user is not logged in, show error message
   if (!uid) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
+      user: undefined,
       message: "Login is required for updating a url"
     });
   }
   const userURLs = urlsForUser(uid, urlDatabase);
   // if url belongs to another user, show error message
   if (!(shortURL in userURLs)) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
+      user,
       message: "Deletion of another user's url is not allowed"
     });
   }
@@ -180,14 +182,16 @@ app.post("/urls/:id", (req, res) => {
   const uid = req.session.userId;
   // if user is not logged in, show error message
   if (!uid) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
+      user: undefined,
       message: "Login is required for updating a url"
     });
   }
   const userURLs = urlsForUser(uid, urlDatabase);
   // if the url doesn't belong to the user, show error message
   if (!(shortURL in userURLs)) {
-    return res.status(404).render("404", {
+    return res.status(400).render("error", {
+      user,
       message: "Editing another user's url is not allowed"
     });
   }
@@ -218,13 +222,17 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   // if email or password are empty, show error message
   if (email === "" || password === "") {
-    res.status(400).send("Bad Request: email and password cannot be empty");
-    return;
+    return res.status(400).render("error", {
+      user: undefined,
+      message: "Bad Request: email and password cannot be empty"
+    });
   }
   // if email already exists, show error message
   if (findUserByEmail(email, users)) {
-    res.status(400).send("Bad Request: email already exists");
-    return;
+    return res.status(400).render("error", {
+      user: undefined,
+      message: "Bad Request: email already exists"
+    });
   }
   // create an identifier (id) for user
   const id = generateRandomString();
@@ -255,12 +263,18 @@ app.post("/login", (req, res) => {
   const user = findUserByEmail(email, users);
   // if provided email doesn't exist, show error message
   if (!user) {
-    return res.send("Error while signing in: user does not exist");
+    return res.status(400).render("error", {
+      user: undefined,
+      message: "Error while signing in: user does not exist"
+    });
   }
   // if password doesn't match, show error message
   const match = bcrypt.compareSync(password, user.hashedPassword);
   if (!match) {
-    return res.send("Error while signing in: password does not match");
+    return res.status(400).render("error", {
+      user: undefined,
+      message: "Error while signing in: password does not match"
+    });
   }
   // set a cookie and redirect to /urls
   req.session.userId = user.id;
