@@ -154,9 +154,10 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-// request --> POST /urls/:id/delete --> delete the (:id) shortURL
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL;
+
+// request --> DELETE /urls/:id/delete --> delete the (:id) shortURL
+app.delete("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
   const uid = req.session.userId;
   // if user is not logged in, show error message
   if (!uid) {
@@ -178,8 +179,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-// request --> POST /urls/:id --> update a url which was earlier created
-app.post("/urls/:id", (req, res) => {
+
+// request --> PUT /urls/:id --> update a url which was earlier created
+app.put("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const uid = req.session.userId;
   // if user is not logged in, show error message
@@ -205,6 +207,7 @@ app.post("/urls/:id", (req, res) => {
   // and redirect to /urls
   res.redirect("/urls");
 });
+
 
 // request --> GET /register --> display signup/registration form
 app.get("/register", (req, res) => {
