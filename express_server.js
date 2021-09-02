@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const bcrypt = require("bcrypt-nodejs");
 const cookieSession = require("cookie-session");
+const methodOverride = require('method-override');
 
 const { generateRandomString, findUserByEmail, urlsForUser } = require("./helpers");
 const PORT = 8080; // default port 8080
@@ -13,6 +14,7 @@ app.use(cookieSession({
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
+app.use(methodOverride('_method'));
 
 app.set("view engine", "ejs");
 
