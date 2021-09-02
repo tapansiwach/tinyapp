@@ -162,7 +162,6 @@ app.get("/u/:shortURL", (req, res) => {
   // update timestamps for the shortURl when a link is visited
   urlDatabase[shortURL].timestamps.push({ userId: user ? user.id : null, time: Date.now().toString() });
   const { visits, uniqueUsers } = analyzeLinkVisits(urlDatabase, shortURL);
-  console.log("visits:", visits, ", uniqueUsers:", uniqueUsers);
   // redirect the user to the (longURL) website
   res.redirect(longURL);
 });
@@ -215,9 +214,9 @@ app.put("/urls/:id", (req, res) => {
   // update the url,
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    uid
+    uid,
+    timestamps: [{ uid, time: Date.now().toString() }]
   };
-  // and redirect to /urls
   res.redirect("/urls");
 });
 
@@ -233,6 +232,7 @@ app.get("/register", (req, res) => {
   // render the registration form
   res.render("user_registration", { user });
 });
+
 
 // request --> POST /register --> create a new user
 app.post("/register", (req, res) => {
@@ -263,6 +263,7 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+
 // request --> GET /login --> display login form
 app.get("/login", (req, res) => {
   const uid = req.session.userId;
@@ -274,6 +275,7 @@ app.get("/login", (req, res) => {
   // render the login form
   res.render("login_form", { user });
 });
+
 
 // request --> POST /login --> login user to website
 app.post("/login", (req, res) => {
@@ -299,6 +301,7 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+
 // request --> POST /logout --> log the user out
 app.post("/logout", (req, res) => {
   // delete the cookie
@@ -307,12 +310,9 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-// TODO: delete dev requirement before pushing final version to GitHub
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

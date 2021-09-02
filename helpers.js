@@ -33,11 +33,9 @@ function analyzeLinkVisits(urlDatabase, url) {
 
   // find out users who clicked on the link
   const clickingUsers = timestamps.map(x => x.userId);
-  console.log(clickingUsers);
 
   // filter out users who weren't logged in
   const identifiedUsers = clickingUsers.filter(x => x !== null);
-  console.log(identifiedUsers);
 
   // find unique users who visited the link
   const uniqueUsers = [...new Set(identifiedUsers)];
