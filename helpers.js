@@ -27,4 +27,22 @@ function urlsForUser(uid, urlDb) {
   return output;
 }
 
-module.exports = { generateRandomString, findUserByEmail, urlsForUser };
+function analyzeLinkVisits(urlDatabase, url) {
+  const timestamps = urlDatabase[url].timestamps;
+  const visits = timestamps.length - 1; // - 1 because first item was created when the shortURL was generated
+
+  // find out users who clicked on the link
+  const clickingUsers = timestamps.map(x => x.userId);
+  console.log(clickingUsers);
+
+  // filter out users who weren't logged in
+  const identifiedUsers = clickingUsers.filter(x => x !== null);
+  console.log(identifiedUsers);
+
+  // find unique users who visited the link
+  const uniqueUsers = [...new Set(identifiedUsers)];
+
+  return { visits, uniqueUsers };
+}
+
+module.exports = { generateRandomString, findUserByEmail, urlsForUser, analyzeLinkVisits };

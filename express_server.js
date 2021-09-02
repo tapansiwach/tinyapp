@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt-nodejs");
 const cookieSession = require("cookie-session");
 const methodOverride = require('method-override');
 
-const { generateRandomString, findUserByEmail, urlsForUser } = require("./helpers");
+const { generateRandomString, findUserByEmail, urlsForUser, analyzeLinkVisits } = require("./helpers");
 const PORT = 8080; // default port 8080
 
 app.use(express.urlencoded({ extended: true }));
@@ -80,6 +80,9 @@ app.post("/urls", (req, res) => {
     longURL,
     uid: userId
   };
+  // add an timestamps array to the object
+  // timestamps is an array of objects --> [ { time: ..., user: ... }, {}, {}, ... ])
+  urlDatabase[shortURL].timestamps = [{ userId, time: Date.now().toString() }];
   // and redirect to /urls/:id, where :id matches the ID of the newly saved URL
   res.redirect(`http://localhost:${PORT}/urls/${shortURL}`);
 });
@@ -127,13 +130,19 @@ app.get("/urls/:shortURL", (req, res) => {
       message: "You can only edit your own URLs"
     });
   }
+  // get analytics for the link
+  const { visits, uniqueUsers } = analyzeLinkVisits(userURLs, shortURL);
+  const timestamps = userURLs[shortURL].timestamps;
+  const genesis = timestamps[0];
   // render the form for editing the long url
-  const templateVars = {
+  res.render("urls_show", {
     user,
     shortURL,
     longURL: userURLs[shortURL].longURL,
-  };
-  res.render("urls_show", templateVars);
+    visits,
+    uniqueUsers: uniqueUsers.length,
+    timestamps,
+  });
 });
 
 
@@ -150,6 +159,10 @@ app.get("/u/:shortURL", (req, res) => {
     });
   }
   const longURL = urlDatabase[shortURL].longURL;
+  // update timestamps for the shortURl when a link is visited
+  urlDatabase[shortURL].timestamps.push({ userId: user ? user.id : null, time: Date.now().toString() });
+  const { visits, uniqueUsers } = analyzeLinkVisits(urlDatabase, shortURL);
+  console.log("visits:", visits, ", uniqueUsers:", uniqueUsers);
   // redirect the user to the (longURL) website
   res.redirect(longURL);
 });
@@ -294,6 +307,10 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+// TODO: delete dev requirement before pushing final version to GitHub
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
 
 
 
